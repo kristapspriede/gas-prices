@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Degvielas cenas Latvijā</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --card: #1a1a24;
+    --border: #2a2a3a;
+    --text: #e8e8f0;
+    --muted: #6b6b88;
+    --accent: #7c6af7;
+    --good: #22d3a0;
+    --warn: #f59e0b;
+    --bad: #f43f5e;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #a78bfa, #7c6af7, #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+  }
+
+  header p { color: var(--muted); font-size: 0.95rem; font-weight: 300; }
+
+  .timestamp {
+    display: inline-block;
+    margin-top: 0.75rem;
+    padding: 0.3rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .nav-link {
+    display: inline-block;
+    margin-top: 0.75rem;
+    margin-left: 0.75rem;
+    padding: 0.3rem 0.9rem;
+    border: 1px solid var(--accent);
+    border-radius: 100px;
+    font-size: 0.78rem;
+    color: var(--accent);
+    text-decoration: none;
+    letter-spacing: 0.05em;
+    transition: background 0.2s;
+  }
+  .nav-link:hover { background: var(--accent); color: #fff; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 1.25rem;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .card:hover { transform: translateY(-3px); border-color: #3a3a54; }
+
+  .card-header {
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+  .card-header h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .card-body { padding: 1rem 1.5rem 1.5rem; }
+
+  .fuel-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .fuel-row:last-child { border-bottom: none; }
+
+  .fuel-name { font-size: 0.9rem; color: var(--muted); font-weight: 400; }
+
+  .fuel-right { display: flex; align-items: center; gap: 0.5rem; }
+
+  .fuel-price {
+    font-size: 1.1rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  .price-best { color: var(--good); }
+  .price-mid  { color: var(--text); }
+  .price-high { color: var(--warn); }
+
+  .badge-best {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(34,211,160,0.15);
+    color: var(--good);
+    padding: 0.2rem 0.5rem;
+    border-radius: 100px;
+  }
+
+  .change {
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    padding: 0.15rem 0.4rem;
+    border-radius: 100px;
+  }
+  .change-up   { background: rgba(244,63,94,0.15); color: var(--bad); }
+  .change-down { background: rgba(34,211,160,0.15); color: var(--good); }
+  .change-flat { background: rgba(107,107,136,0.15); color: var(--muted); }
+
+  .summary {
+    max-width: 1200px;
+    margin: 0 auto 2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 1.25rem 1.5rem;
+  }
+
+  .summary h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  .summary-grid { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+
+  .summary-item { display: flex; flex-direction: column; gap: 0.2rem; }
+  .summary-fuel { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .summary-val  { font-size: 1.3rem; font-weight: 700; color: var(--good); font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+  .summary-station { font-size: 0.75rem; color: var(--muted); }
+
+  .no-data { color: var(--muted); font-size: 0.85rem; padding: 1rem 0; text-align: center; }
+
+  .error-msg {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 1.25rem 1.5rem;
+    background: rgba(244,63,94,0.1);
+    border: 1px solid rgba(244,63,94,0.3);
+    border-radius: 1rem;
+    color: var(--bad);
+    text-align: center;
+    font-size: 0.9rem;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 3rem;
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.6;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Degvielas cenas</h1>
+  <p>Zemākās cenas Latvijas degvielas uzpildes stacijās</p>
+  <div>
+    <div class="timestamp" id="ts">Ielādē...</div>
+    <a class="nav-link" href="history.html">Cenu vēsture</a>
+  </div>
+</header>
+
+<div id="summary-container"></div>
+<div class="grid" id="cards-container"></div>
+<div id="error-container"></div>
+
+<footer>
+  <p>Cenas iegūtas no:
+    <a href="https://www.circlek.lv/degviela-miles/degvielas-cenas" target="_blank">Circle K</a> &middot;
+    <a href="https://www.neste.lv/lv/content/degvielas-cenas" target="_blank">Neste</a> &middot;
+    <a href="https://www.virsi.lv/lv/privatpersonam/degviela/degvielas-un-elektrouzlades-cenas" target="_blank">Virši</a> &middot;
+    <a href="https://www.viada.lv/zemakas-degvielas-cenas/" target="_blank">Viada</a>
+  </p>
+  <p style="margin-top:0.4rem">Cenām ir informatīvs raksturs. Tās var mainīties vairākkārtīgi dienas laikā.</p>
+</footer>
+
+<script>
+  // ── Set your Render backend URL here ────────────────────────────────────────
+  const API_URL = "https://YOUR-APP.onrender.com";
+  // ────────────────────────────────────────────────────────────────────────────
+
+  const FUEL_PRIORITY = ["95", "98", "Diesel", "Diesel Premium", "LPG", "CNG", "AdBlue", "HVO/XTL"];
+
+  function fuelSort(a, b) {
+    const ia = FUEL_PRIORITY.indexOf(a.fuel);
+    const ib = FUEL_PRIORITY.indexOf(b.fuel);
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+  }
+
+  function formatTs(iso) {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    return d.toLocaleString("lv-LV", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  }
+
+  function changeHtml(change) {
+    if (change === null || change === undefined) return "";
+    const abs = Math.abs(change).toFixed(3);
+    if (change > 0.0005) return `<span class="change change-up">▲ +${abs}</span>`;
+    if (change < -0.0005) return `<span class="change change-down">▼ −${abs}</span>`;
+    return `<span class="change change-flat">—</span>`;
+  }
+
+  function renderPrices(data) {
+    // Timestamp
+    document.getElementById("ts").textContent = "Atjaunots: " + formatTs(data.scraped_at);
+
+    const stations = data.stations;
+
+    // Collect best prices per fuel across all stations
+    const bestMap = {}; // fuel -> { price, station }
+    stations.forEach(s => {
+      s.prices.forEach(p => {
+        if (!(p.fuel in bestMap) || p.price < bestMap[p.fuel].price) {
+          bestMap[p.fuel] = { price: p.price, station: s.name };
+        }
+      });
+    });
+
+    // Summary bar
+    const allFuels = Object.keys(bestMap).sort(fuelSort.bind(null));
+    const summaryItems = FUEL_PRIORITY
+      .filter(f => f in bestMap)
+      .concat(Object.keys(bestMap).filter(f => !FUEL_PRIORITY.includes(f)))
+      .map(f => `
+        <div class="summary-item">
+          <div class="summary-fuel">${f}</div>
+          <div class="summary-val">€${bestMap[f].price.toFixed(3)}</div>
+          <div class="summary-station">${bestMap[f].station}</div>
+        </div>`).join("");
+
+    document.getElementById("summary-container").innerHTML = `
+      <div class="summary">
+        <h3>Zemākās cenas &mdash; Visi tīkli</h3>
+        <div class="summary-grid">${summaryItems}</div>
+      </div>`;
+
+    // Station cards
+    const cards = stations.map(s => {
+      if (!s.prices.length) {
+        return `<div class="card">
+          <div class="card-header">
+            <span class="brand-dot" style="background:${s.color}"></span>
+            <h2>${s.name}</h2>
+          </div>
+          <div class="card-body"><p class="no-data">Nav datu</p></div>
+        </div>`;
+      }
+
+      const rows = [...s.prices].sort(fuelSort).map(p => {
+        const best = bestMap[p.fuel];
+        const isBest = best && Math.abs(p.price - best.price) < 0.0005;
+        const diff = best ? p.price - best.price : 0;
+        let cls = "price-high";
+        if (isBest) cls = "price-best";
+        else if (diff < 0.05) cls = "price-mid";
+
+        const badge = isBest ? '<span class="badge-best">LĒTĀKĀ</span>' : "";
+        return `
+          <div class="fuel-row">
+            <span class="fuel-name">${p.fuel}</span>
+            <span class="fuel-right">
+              ${changeHtml(p.change)}
+              <span class="fuel-price ${cls}">€${p.price.toFixed(3)} ${badge}</span>
+            </span>
+          </div>`;
+      }).join("");
+
+      return `
+        <div class="card">
+          <div class="card-header">
+            <span class="brand-dot" style="background:${s.color}"></span>
+            <h2>${s.name}</h2>
+          </div>
+          <div class="card-body">${rows}</div>
+        </div>`;
+    }).join("");
+
+    document.getElementById("cards-container").innerHTML = cards;
+  }
+
+  async function load() {
+    try {
+      const resp = await fetch(`${API_URL}/api/prices`);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      renderPrices(data);
+    } catch (err) {
+      document.getElementById("ts").textContent = "Kļūda ielādējot datus";
+      document.getElementById("error-container").innerHTML = `
+        <div class="error-msg">
+          Neizdevās ielādēt cenas. Pārbaudiet, vai API darbojas.<br>
+          <small>${err.message}</small>
+        </div>`;
+    }
+  }
+
+  load();
+</script>
+</body>
+</html>

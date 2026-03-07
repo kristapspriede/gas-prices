@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cenu vēsture – Degvielas cenas Latvijā</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --card: #1a1a24;
+    --border: #2a2a3a;
+    --text: #e8e8f0;
+    --muted: #6b6b88;
+    --accent: #7c6af7;
+    --good: #22d3a0;
+    --warn: #f59e0b;
+    --bad: #f43f5e;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+
+  header { text-align: center; margin-bottom: 3rem; }
+
+  header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #a78bfa, #7c6af7, #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+  }
+
+  header p { color: var(--muted); font-size: 0.95rem; font-weight: 300; }
+
+  .nav-link {
+    display: inline-block;
+    margin-top: 0.75rem;
+    padding: 0.3rem 0.9rem;
+    border: 1px solid var(--accent);
+    border-radius: 100px;
+    font-size: 0.78rem;
+    color: var(--accent);
+    text-decoration: none;
+    letter-spacing: 0.05em;
+    transition: background 0.2s;
+  }
+  .nav-link:hover { background: var(--accent); color: #fff; }
+
+  .controls {
+    max-width: 1200px;
+    margin: 0 auto 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .controls label { color: var(--muted); font-size: 0.85rem; }
+
+  .tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+  .tab {
+    padding: 0.45rem 1.1rem;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab:hover { border-color: var(--accent); color: var(--text); }
+  .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    padding: 0.45rem 1rem;
+    cursor: pointer;
+  }
+
+  .chart-container {
+    max-width: 1200px;
+    margin: 0 auto 2rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+  }
+
+  .chart-wrap { position: relative; height: 380px; }
+
+  .table-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 1.25rem;
+    overflow: hidden;
+  }
+
+  .table-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .table-header h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody td {
+    padding: 0.65rem 1.5rem;
+    font-size: 0.88rem;
+    border-bottom: 1px solid var(--border);
+    font-variant-numeric: tabular-nums;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface); }
+
+  .no-data { color: var(--muted); padding: 2rem; text-align: center; font-size: 0.85rem; }
+
+  .error-msg {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 1.25rem 1.5rem;
+    background: rgba(244,63,94,0.1);
+    border: 1px solid rgba(244,63,94,0.3);
+    border-radius: 1rem;
+    color: var(--bad);
+    text-align: center;
+    font-size: 0.9rem;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 3rem;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Cenu vēsture</h1>
+  <p>Degvielas cenu izmaiņas laika gaitā</p>
+  <a class="nav-link" href="index.html">← Pašreizējās cenas</a>
+</header>
+
+<div class="controls">
+  <label>Degvielas veids:</label>
+  <div class="tabs" id="fuel-tabs"></div>
+  <label style="margin-left:auto">Periods:</label>
+  <select id="days-select">
+    <option value="7">7 dienas</option>
+    <option value="30" selected>30 dienas</option>
+    <option value="90">90 dienas</option>
+    <option value="365">1 gads</option>
+  </select>
+</div>
+
+<div class="chart-container">
+  <div class="chart-wrap">
+    <canvas id="price-chart"></canvas>
+  </div>
+</div>
+
+<div class="table-container">
+  <div class="table-header"><h3 id="table-title">Dati</h3></div>
+  <div id="table-body"></div>
+</div>
+
+<div id="error-container"></div>
+
+<footer>
+  <p style="margin-top:1rem">
+    <a href="index.html">← Pašreizējās cenas</a>
+  </p>
+</footer>
+
+<script>
+  // ── Set your Render backend URL here ────────────────────────────────────────
+  const API_URL = "https://YOUR-APP.onrender.com";
+  // ────────────────────────────────────────────────────────────────────────────
+
+  const FUELS = ["95", "98", "Diesel", "Diesel Premium", "LPG", "CNG", "AdBlue", "HVO/XTL"];
+  const STATION_COLORS = {
+    "Circle K": "#E31837",
+    "Neste":    "#FF6600",
+    "Virši":    "#00963F",
+    "Viada":    "#003087",
+  };
+
+  let currentFuel = "95";
+  let currentDays = 30;
+  let chart = null;
+
+  // Build fuel tabs
+  const tabsEl = document.getElementById("fuel-tabs");
+  FUELS.forEach(f => {
+    const btn = document.createElement("button");
+    btn.className = "tab" + (f === currentFuel ? " active" : "");
+    btn.textContent = f;
+    btn.onclick = () => { currentFuel = f; setActiveTab(f); loadHistory(); };
+    tabsEl.appendChild(btn);
+  });
+
+  document.getElementById("days-select").addEventListener("change", e => {
+    currentDays = parseInt(e.target.value);
+    loadHistory();
+  });
+
+  function setActiveTab(fuel) {
+    tabsEl.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.textContent === fuel));
+  }
+
+  function formatDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString("lv-LV", { day: "2-digit", month: "2-digit", year: "numeric" })
+      + " " + d.toLocaleTimeString("lv-LV", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function renderChart(series, fuel) {
+    const ctx = document.getElementById("price-chart").getContext("2d");
+
+    const datasets = series.map(s => ({
+      label: s.station,
+      data: s.data.map(d => ({ x: new Date(d.t), y: d.price })),
+      borderColor: STATION_COLORS[s.station] || "#7c6af7",
+      backgroundColor: (STATION_COLORS[s.station] || "#7c6af7") + "22",
+      borderWidth: 2,
+      pointRadius: 3,
+      tension: 0.3,
+      fill: false,
+    }));
+
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+      type: "line",
+      data: { datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: {
+            labels: { color: "#e8e8f0", font: { family: "Space Grotesk" } }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => `${ctx.dataset.label}: €${ctx.parsed.y.toFixed(3)}`
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: "time",
+            time: { unit: currentDays <= 7 ? "hour" : "day" },
+            ticks: { color: "#6b6b88", font: { family: "Space Grotesk" } },
+            grid: { color: "#2a2a3a" }
+          },
+          y: {
+            ticks: {
+              color: "#6b6b88",
+              font: { family: "Space Grotesk" },
+              callback: v => "€" + v.toFixed(3)
+            },
+            grid: { color: "#2a2a3a" }
+          }
+        }
+      }
+    });
+  }
+
+  function renderTable(series, fuel) {
+    document.getElementById("table-title").textContent = `Datu tabula – ${fuel}`;
+
+    if (!series.length || series.every(s => !s.data.length)) {
+      document.getElementById("table-body").innerHTML = '<p class="no-data">Nav pieejamu datu šim periodam.</p>';
+      return;
+    }
+
+    // Flatten all rows and sort by time desc
+    const rows = [];
+    series.forEach(s => {
+      s.data.forEach(d => rows.push({ station: s.station, t: d.t, price: d.price }));
+    });
+    rows.sort((a, b) => new Date(b.t) - new Date(a.t));
+
+    const tableHtml = `
+      <table>
+        <thead>
+          <tr>
+            <th>Datums</th>
+            <th>Stacija</th>
+            <th>Cena</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr>
+              <td>${formatDate(r.t)}</td>
+              <td>${r.station}</td>
+              <td>€${r.price.toFixed(3)}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>`;
+    document.getElementById("table-body").innerHTML = tableHtml;
+  }
+
+  async function loadHistory() {
+    document.getElementById("error-container").innerHTML = "";
+    try {
+      const resp = await fetch(`${API_URL}/api/history?fuel=${encodeURIComponent(currentFuel)}&days=${currentDays}`);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+
+      renderChart(data.series, currentFuel);
+      renderTable(data.series, currentFuel);
+    } catch (err) {
+      document.getElementById("error-container").innerHTML = `
+        <div class="error-msg">
+          Neizdevās ielādēt vēsturi. Pārbaudiet, vai API darbojas.<br>
+          <small>${err.message}</small>
+        </div>`;
+    }
+  }
+
+  loadHistory();
+</script>
+</body>
+</html>
