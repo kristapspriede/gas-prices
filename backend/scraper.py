@@ -112,14 +112,14 @@ def parse_neste(html):
 def parse_virsi(html):
     TYPE_MAP = {"95e": "95", "98e": "98", "dd": "Diesel", "lpg": "LPG"}
     prices = {}
-    for block in re.findall(r'<div[^>]+class="price-card"[^>]+data-type="([^"]+)"[^>]*>(.*?)</div\s*>', html, re.S | re.I):
-        data_type, content = block
-        fuel = TYPE_MAP.get(data_type.lower())
-        if not fuel:
+    for m in re.finditer(r'data-type="([^"]+)"', html, re.I):
+        fuel = TYPE_MAP.get(m.group(1).lower())
+        if not fuel or fuel in prices:
             continue
-        m = re.search(r"<span[^>]*>([\d]+\.[\d]+)</span>", content, re.I)
-        if m and fuel not in prices:
-            prices[fuel] = float(m.group(1))
+        window = html[m.start():m.start() + 600]
+        price_m = re.search(r"<span[^>]*>([\d]+\.[\d]+)</span>", window, re.I)
+        if price_m:
+            prices[fuel] = float(price_m.group(1))
     return prices
 
 
