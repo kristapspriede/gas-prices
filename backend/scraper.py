@@ -114,7 +114,10 @@ def parse_neste(html):
 
 def parse_virsi(html):
     prices = {}
-    print(f"  DEBUG virsi html length: {len(html)}, snippet: {html[:200]!r}")
+    for keyword in ["DD", "95E", "98E", "LPG", "1.6", "1.7", "1.8"]:
+        idx = html.lower().find(keyword.lower())
+        if idx != -1:
+            print(f"  DEBUG virsi '{keyword}' at {idx}: {html[max(0,idx-30):idx+60]!r}")
     pattern = re.compile(
         r"(DD|95E|98E|LPG)\s*\n?\s*([\d]+\.[\d]+)",
         re.I,
