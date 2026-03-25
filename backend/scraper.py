@@ -128,15 +128,16 @@ def parse_virsi(html):
 
 
 def parse_viada(html):
+    # Row indices (0-based, counting only rows that contain a price):
+    # 0 = 95 Multi, 1 = 95 Multi X (skip), 2 = 98 Multi X,
+    # 3 = D plain (skip), 4 = D Multi X, 5 = Gāze (LPG)
+    ROW_MAP = {0: "95", 2: "98", 4: "Diesel", 5: "LPG"}
     prices = {}
-    rows = re.findall(r"<tr[^>]*>(.*?)</tr>", html, re.S | re.I)
-    fuel_order = ["LPG", "Diesel", "95", "HVO/XTL", "98", "AdBlue", "CNG"]
-    fuel_idx = 0
+    price_row_idx = 0
 
-    for row in rows:
+    for row in re.findall(r"<tr[^>]*>(.*?)</tr>", html, re.S | re.I):
         cells = re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", row, re.S | re.I)
         cells_clean = [re.sub(r"<[^>]+>", "", c).strip() for c in cells]
-        cells_raw = [c for c in cells]
 
         price_match = None
         for c in cells_clean:
@@ -148,22 +149,10 @@ def parse_viada(html):
         if price_match is None:
             continue
 
-        fuel_name = None
-        for c in cells_raw:
-            alt = re.search(r'alt=["\']([^"\']+)["\']', c, re.I)
-            if alt:
-                candidate = normalise_fuel(alt.group(1))
-                if candidate:
-                    fuel_name = candidate
-                    break
-
-        if not fuel_name and fuel_idx < len(fuel_order):
-            fuel_name = fuel_order[fuel_idx]
-
-        print(f"  DEBUG viada row {fuel_idx}: fuel={fuel_name!r} price={price_match}")
-        if fuel_name and fuel_name in ALLOWED_FUELS and fuel_name not in prices:
+        fuel_name = ROW_MAP.get(price_row_idx)
+        if fuel_name:
             prices[fuel_name] = price_match
-        fuel_idx += 1
+        price_row_idx += 1
 
     return prices
 
