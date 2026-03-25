@@ -59,26 +59,20 @@ def fetch_html(url):
 
 # ── Fuel name normalisers ────────────────────────────────────────────────────
 
+ALLOWED_FUELS = {"95", "98", "Diesel", "LPG"}
+
 def normalise_fuel(raw):
     raw = raw.strip()
     low = raw.lower()
-    if re.search(r"\bdmiles\+\b|\bpro.?diesel\b|\bneste pro\b", low):
-        return "Diesel Premium"
-    if re.search(r"\bdmiles\b|\bfutura.?d\b|\bdd\b|\b95e.{0,3}dīzeļ|neste futura d\b", low):
+    if re.search(r"\bdmiles\b|\bfutura.?d\b|\bdd\b|neste futura d\b", low):
         return "Diesel"
-    if re.search(r"95miles|futura 95|95e|^95$", low):
+    if re.search(r"95miles|futura.?95|futurama|95e|^95$", low):
         return "95"
-    if re.search(r"98miles\+?|futura 98|98e|^98$", low):
+    if re.search(r"98miles\+?|futura.?98|98e|^98$", low):
         return "98"
     if re.search(r"autogāze|lpg", low):
         return "LPG"
-    if re.search(r"cng", low):
-        return "CNG"
-    if re.search(r"adblue|adblū", low):
-        return "AdBlue"
-    if re.search(r"xtl|hvo|miles\+xtl", low):
-        return "HVO/XTL"
-    return raw
+    return None
 
 
 # ── Station-specific parsers ─────────────────────────────────────────────────
@@ -94,7 +88,7 @@ def parse_circlek(html):
             m = re.search(r"(\d+\.\d+)", cells[1])
             if m and cells[0]:
                 fuel = normalise_fuel(cells[0])
-                if fuel not in prices:
+                if fuel and fuel in ALLOWED_FUELS and fuel not in prices:
                     prices[fuel] = float(m.group(1))
     return prices
 
@@ -110,7 +104,7 @@ def parse_neste(html):
             m = re.search(r"(\d+\.\d+)", cells[1])
             if m and cells[0]:
                 fuel = normalise_fuel(cells[0])
-                if fuel not in prices:
+                if fuel and fuel in ALLOWED_FUELS and fuel not in prices:
                     prices[fuel] = float(m.group(1))
     return prices
 
@@ -118,13 +112,13 @@ def parse_neste(html):
 def parse_virsi(html):
     prices = {}
     pattern = re.compile(
-        r"(DD|95E|98E|CNG|LPG|AdBLUE|AdBlue)\s*\n?\s*([\d]+\.[\d]+)",
+        r"(DD|95E|98E|LPG)\s*\n?\s*([\d]+\.[\d]+)",
         re.I,
     )
     for m in pattern.finditer(html):
         fuel = normalise_fuel(m.group(1))
         price = float(m.group(2))
-        if fuel not in prices:
+        if fuel and fuel in ALLOWED_FUELS and fuel not in prices:
             prices[fuel] = price
     return prices
 
@@ -162,7 +156,7 @@ def parse_viada(html):
         if not fuel_name and fuel_idx < len(fuel_order):
             fuel_name = fuel_order[fuel_idx]
 
-        if fuel_name and fuel_name not in prices:
+        if fuel_name and fuel_name in ALLOWED_FUELS and fuel_name not in prices:
             prices[fuel_name] = price_match
         fuel_idx += 1
 
@@ -182,31 +176,24 @@ FALLBACK_PRICES = {
         "95": 1.634,
         "98": 1.704,
         "Diesel": 1.694,
-        "Diesel Premium": 1.804,
-        "HVO/XTL": 2.370,
         "LPG": 0.925,
     },
     "Neste": {
         "95": 1.617,
         "98": 1.687,
         "Diesel": 1.677,
-        "Diesel Premium": 1.807,
     },
     "Virši": {
-        "Diesel": 1.677,
         "95": 1.627,
         "98": 1.697,
-        "CNG": 1.425,
+        "Diesel": 1.677,
         "LPG": 0.925,
-        "AdBlue": 0.845,
     },
     "Viada": {
-        "LPG": 0.805,
-        "Diesel": 1.592,
         "95": 1.537,
         "98": 1.512,
-        "AdBlue": 1.684,
-        "HVO/XTL": 1.959,
+        "Diesel": 1.592,
+        "LPG": 0.805,
     },
 }
 

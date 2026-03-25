@@ -77,7 +77,7 @@ def get_prices(db: Session = Depends(get_db)):
     # Group by station
     station_map = {s["name"]: {"name": s["name"], "color": s["color"], "prices": []} for s in STATIONS}
 
-    fuel_priority = ["95", "98", "Diesel", "Diesel Premium", "LPG", "CNG", "AdBlue", "HVO/XTL"]
+    fuel_priority = ["95", "98", "Diesel", "LPG"]
 
     for row in latest_rows:
         price = float(row.price)
