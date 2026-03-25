@@ -41,7 +41,7 @@ def scrape(db: Session = Depends(get_db)):
                 station=station["name"],
                 fuel_type=fuel,
                 price=price,
-                is_fallback=station["cached"],
+                is_fallback=False,
             ))
             inserted += 1
     db.commit()

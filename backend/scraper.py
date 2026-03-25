@@ -55,6 +55,9 @@ def fetch_html(url):
     except URLError as e:
         print(f"  ERROR fetching {url}: {e}")
         return ""
+    except Exception as e:
+        print(f"  ERROR fetching {url}: {type(e).__name__}: {e}")
+        return ""
 
 
 # ── Fuel name normalisers ────────────────────────────────────────────────────
@@ -111,6 +114,7 @@ def parse_neste(html):
 
 def parse_virsi(html):
     prices = {}
+    print(f"  DEBUG virsi html length: {len(html)}, snippet: {html[:200]!r}")
     pattern = re.compile(
         r"(DD|95E|98E|LPG)\s*\n?\s*([\d]+\.[\d]+)",
         re.I,
@@ -156,6 +160,7 @@ def parse_viada(html):
         if not fuel_name and fuel_idx < len(fuel_order):
             fuel_name = fuel_order[fuel_idx]
 
+        print(f"  DEBUG viada row {fuel_idx}: fuel={fuel_name!r} price={price_match}")
         if fuel_name and fuel_name in ALLOWED_FUELS and fuel_name not in prices:
             prices[fuel_name] = price_match
         fuel_idx += 1
@@ -171,33 +176,6 @@ PARSERS = {
 }
 
 # Fallback prices (manually scraped 2026-03-06) used when live fetch fails
-FALLBACK_PRICES = {
-    "Circle K": {
-        "95": 1.634,
-        "98": 1.704,
-        "Diesel": 1.694,
-        "LPG": 0.925,
-    },
-    "Neste": {
-        "95": 1.617,
-        "98": 1.687,
-        "Diesel": 1.677,
-    },
-    "Virši": {
-        "95": 1.627,
-        "98": 1.697,
-        "Diesel": 1.677,
-        "LPG": 0.925,
-    },
-    "Viada": {
-        "95": 1.537,
-        "98": 1.512,
-        "Diesel": 1.592,
-        "LPG": 0.805,
-    },
-}
-
-
 def scrape_all():
     """Scrape all stations. Returns list of dicts with station info + prices."""
     results = []
@@ -207,11 +185,9 @@ def scrape_all():
         html = fetch_html(station["url"])
         parser = PARSERS[name]
         prices = parser(html) if html else {}
-        used_fallback = False
         if not prices:
-            prices = FALLBACK_PRICES.get(name, {})
-            used_fallback = True
-            print(f"  WARNING: Live fetch failed – using fallback prices")
-        print(f"  Found {len(prices)} fuel types: {list(prices.keys())}")
-        results.append({**station, "prices": prices, "cached": used_fallback})
+            print(f"  WARNING: Live fetch failed – skipping {name}")
+        else:
+            print(f"  Found {len(prices)} fuel types: {list(prices.keys())}")
+        results.append({**station, "prices": prices, "cached": False})
     return results
