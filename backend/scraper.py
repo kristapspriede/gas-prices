@@ -55,9 +55,6 @@ def fetch_html(url):
     except URLError as e:
         print(f"  ERROR fetching {url}: {e}")
         return ""
-    except Exception as e:
-        print(f"  ERROR fetching {url}: {type(e).__name__}: {e}")
-        return ""
 
 
 # ── Fuel name normalisers ────────────────────────────────────────────────────
@@ -113,20 +110,16 @@ def parse_neste(html):
 
 
 def parse_virsi(html):
+    TYPE_MAP = {"95e": "95", "98e": "98", "dd": "Diesel", "lpg": "LPG"}
     prices = {}
-    for keyword in ["DD", "95E", "98E", "LPG", "1.6", "1.7", "1.8"]:
-        idx = html.lower().find(keyword.lower())
-        if idx != -1:
-            print(f"  DEBUG virsi '{keyword}' at {idx}: {html[max(0,idx-30):idx+60]!r}")
-    pattern = re.compile(
-        r"(DD|95E|98E|LPG)\s*\n?\s*([\d]+\.[\d]+)",
-        re.I,
-    )
-    for m in pattern.finditer(html):
-        fuel = normalise_fuel(m.group(1))
-        price = float(m.group(2))
-        if fuel and fuel in ALLOWED_FUELS and fuel not in prices:
-            prices[fuel] = price
+    for block in re.findall(r'<div[^>]+class="price-card"[^>]+data-type="([^"]+)"[^>]*>(.*?)</div\s*>', html, re.S | re.I):
+        data_type, content = block
+        fuel = TYPE_MAP.get(data_type.lower())
+        if not fuel:
+            continue
+        m = re.search(r"<span[^>]*>([\d]+\.[\d]+)</span>", content, re.I)
+        if m and fuel not in prices:
+            prices[fuel] = float(m.group(1))
     return prices
 
 
